@@ -12,7 +12,19 @@ typedef struct {
 tuple_t opcode_list[30] = {
         {10101011001, 11}, //ADDS extended
         {3, 4},
-        {5, 6}
+        {5, 6},
+        {0b1101001101,10}, // LSL (immediate)
+        {0b1101001101,10}, //  LSR (immediate)MISMO QUE EL LSL SOLO CAMBIA EL IMMR 
+        {0b11111000000,11}, //STUR
+        {0b00111000000,11}, //STURB
+        {0b01111000000,11},//STURH
+        {0b1111000010,10},//LDUR
+        {0b01111000010,11},//LDURH
+        {0b00111000010}, // LDURB
+        {0b11010010100,11}, // MOVZ
+        {0b10011011000,11}, // MUL(Escalares)
+        {0b1011000, 7}, // CBZ
+        {0b1011100, 7}, // CBNZ
     };
 
 typedef struct {
