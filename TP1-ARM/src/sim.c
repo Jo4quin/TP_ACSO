@@ -4,6 +4,16 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+typedef struct {
+    int opcode;
+    int largo;
+} tuple_t;
+
+tuple_t opcode_list[30] = {
+        {10101011001, 11}, //ADDS extended
+        {3, 4},
+        {5, 6}
+    };
 
 typedef struct {
     u_int32_t opcode;
@@ -19,30 +29,6 @@ typedef struct {
 
 decoded_instruction decode_instruction(u_int32_t instruction){
     decoded_instruction decoded;
-
-    uint32_t opcode_6 = (instruction >> 26) & 0x3F;
-
-    if (opcode_6 == 0b000101) { // 📌 Branch incondicional (B)
-        decoded.type = 2; // Tipo Branch
-        decoded.imm26 = instruction & 0x3FFFFFF; // Offset de 26 bits
-    } 
-    else if (opcode_6 == 0b01010100) { // 📌 Branch condicional (B.cond)
-        decoded.type = 3; // Tipo Branch Condicional
-        decoded.imm19 = (instruction >> 5) & 0x7FFFF; // Offset de 19 bits
-        decoded.rd = instruction & 0x1F; // Registro a evaluar
-    } 
-    else if ((instruction >> 30) == 0b00) { // 📌 Instrucciones con inmediato (ADD/SUB imm)
-        decoded.type = 1; // Tipo Inmediato
-        decoded.rd = instruction & 0x1F;
-        decoded.rn = (instruction >> 5) & 0x1F;
-        decoded.imm12 = (instruction >> 10) & 0xFFF;
-    } 
-    else { // 📌 Instrucciones de registro (ADD/SUB/EOR/ORR/etc.)
-        decoded.type = 0; // Tipo Registro
-        decoded.rd = instruction & 0x1F;
-        decoded.rn = (instruction >> 5) & 0x1F;
-        decoded.rm = (instruction >> 16) & 0x1F;
-    }
 
     return decoded;
 }
