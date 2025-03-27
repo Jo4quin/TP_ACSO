@@ -50,7 +50,7 @@ tuple_t opcode_list[26] = {
     {00111000010, 11, 2}, // LDURB (Load Byte)
     {11010100010, 11, 3}, // HLT (Halt)
     {1101011, 7, 3},      // BR (Branch to Register)
-    {000101, 6, 3}        // B (Branch)
+    {000101, 6, 3},       // B (Branch)
     {10111001, 8, 4},     // CBNZ (Conditional Branch)
     {10110100, 8, 4},     // CBZ (Conditional Branch)
     {11010010100, 11, 5}, // MOVZ (Inmediate Wide)
