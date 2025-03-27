@@ -38,13 +38,13 @@ tuple_t opcode_list[26] = {
     {1001000100, 10, 1},  // ADD Immediate
     {1101001101, 10, 1},  // LSR Immediat                                       e
     {1101001101, 10, 1},  // LSL Immediate
-    {1111000010, 10, 2},  // LDUR (Load)
     {1111000100, 10, 1},  // CMP Immediate
     {1011000100, 10, 1},  // ADDS Immediate
     {1101000100, 10, 1},  // SUBS Immediate
     {11111000000, 11, 2}, // STUR (Store)
     {00111000000, 11, 2}, // STURB (Store Byte)
     {01111000000, 11, 2}, // STURH (Store Halfword)
+    {1111000010, 10, 2},  // LDUR (Load)
     {01111000010, 11, 2}, // LDURH (Load Halfword)
     {00111000010, 11, 2}, // LDURB (Load Byte)
     {11010100010, 11, 3}, // HLT (Halt)
@@ -197,6 +197,9 @@ void data_transfer_instruction(decoded_instruction decoded_opcode){
             break;
         case 01111000000:
             STURH(decoded_opcode);
+            break;
+        case 1111000010:
+            LDUR(decoded_opcode);
             break;
         case 01111000010:
             LDURH(decoded_opcode);
