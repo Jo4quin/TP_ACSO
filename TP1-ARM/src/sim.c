@@ -252,20 +252,8 @@ void process_instruction()
 
     decoded_instruction decoded = decode_instruction(instruction);
 
-    printf("Instruction: %x\n", instruction);
-    printf("Decoded: %x\n", decoded.opcode);
-    printf("Type: %d\n", decoded.type);
-    printf("RM: %x\n", decoded.rm);
-    printf("SHAMT: %x\n", decoded.shamt);
-    printf("RN: %x\n", decoded.rn);
-    printf("RD: %x\n", decoded.rd);
-    printf("ALU_IMMEDIATE: %x\n", decoded.ALU_immediate);
-    printf("DT_ADDRESS: %x\n", decoded.DT_address);
-    printf("OP: %x\n", decoded.op);
-    printf("RT: %x\n", decoded.rt);
-    printf("BR_ADDRESS: %x\n", decoded.BR_address);
-    printf("COND_BRANCH_ADDRESS: %x\n", decoded.cond_branch_address);
-    printf("MOV_INMEDIATE: %x\n", decoded.MOV_inmediate);
+    run_instruction(decoded);
+
 
 
 }
