@@ -6,83 +6,187 @@
 
 typedef struct {
     int opcode;
-    int lenght;
+    int length;
+    int type;  // 0 = register, 1 = immediate, 2 = data transfer, 3 = branch, 4 = conditional branch, 5 = inmediate wide
 } tuple_t;
 
-tuple_t opcode_list[30] = {
-        {10101011001, 11}, //ADDS extended
-        {0b1101001101,10}, // LSL (immediate)
-        {0b1101001101,10}, //  LSR (immediate)MISMO QUE EL LSL SOLO CAMBIA EL IMMR 
-        {0b11111000000,11}, //STUR
-        {0b00111000000,11}, //STURB
-        {0b01111000000,11},//STURH
-        {0b1111000010,10},//LDUR
-        {0b01111000010,11},//LDURH
-        {0b00111000010}, // LDURB
-        {0b11010010100,11}, // MOVZ
-        {0b10011011000,11}, // MUL(Escalares)
-        {0b1011000, 7}, // CBZ
-        {0b1011100, 7}, // CBNZ
-        {1011000100, 10}, //ADDS inmediate (ultimos 2 valores son el shift. hay que implementarlo)
-        {1101000100, 10}, //SUBS inmediate (ultimos 2 valores son el shift. Hay que implentarlos)
-        {11001011001, 11}, //SUBS extended 
-        {11010100010, 11}, //HLT 
-        {11101011001, 11}, //CMP extended
-        {1111000100, 10}, //CMP inmediate (ultimos 2 valores son el shift. Hay que implementarlos)
-        {11101010000, 11}, //ANDS shifted (NO HAY QUE IMPLEMENTAR EL SHIFT. son los anteultimos 2)
-        {11001010000, 11}, //EOR shifted
-        {11110001100, 11}, //ORR shifted
-        {}
-    };
+tuple_t opcode_list[26] = {
+    {10001011001, 11, 0}, // ADD Extended
+    {10101011001, 11, 0}, // ADDS Extended
+    {10011011000, 11, 0}, // MUL (Scalar Multiplication)
+    {11001011001, 11, 0}, // SUBS Extended
+    {11101011001, 11, 0}, // CMP Extended
+    {11101010000, 11, 0}, // ANDS Shifted
+    {11001010000, 11, 0}, // EOR Shifted
+    {11110001100, 11, 0}, // ORR Shifted
+    {1001000100, 10, 1},  // ADD Immediate
+    {1101001101, 10, 1},  // LSR Immediate
+    {1101001101, 10, 1},  // LSL Immediate
+    {1111000010, 10, 2},  // LDUR (Load)
+    {1111000100, 10, 1},  // CMP Immediate
+    {1011000100, 10, 1},  // ADDS Immediate
+    {1101000100, 10, 1},  // SUBS Immediate
+    {11111000000, 11, 2}, // STUR (Store)
+    {00111000000, 11, 2}, // STURB (Store Byte)
+    {01111000000, 11, 2}, // STURH (Store Halfword)
+    {01111000010, 11, 2}, // LDURH (Load Halfword)
+    {00111000010, 11, 2}, // LDURB (Load Byte)
+    {11010100010, 11, 3}, // HLT (Halt)
+    {1101011, 7, 3},      // BR (Branch to Register)
+    {000101, 6, 3}        // B (Branch)
+    {10111001, 8, 4},     // CBNZ (Conditional Branch)
+    {10110100, 8, 4},     // CBZ (Conditional Branch)
+    {11010010100, 11, 5}, // MOVZ (Inmediate Wide)
+};
+
 
 typedef struct {
     u_int32_t opcode;
-    u_int32_t rd;
-    u_int32_t rn;
     u_int32_t rm;
-    uint32_t cond;
-    u_int32_t imm6;
-    u_int32_t imm12;
-    u_int32_t imm19;
-    u_int32_t imm26;
-    u_int32_t immhi;
-    u_int32_t shift;
-    u_int8_t type; // 0 = register, 1 = immediate, 2 = data transfer, 3 = branch, 4 = conditional branch
+    u_int32_t shamt;
+    u_int32_t rn;
+    u_int32_t rd;
+    u_int32_t ALU_immediate;
+    u_int32_t DT_address;
+    u_int32_t op;
+    u_int32_t rt;
+    u_int32_t BR_address;
+    u_int32_t cond_branch_address;
+    u_int32_t MOV_inmediate;
+    u_int8_t type; // 0 = register, 1 = immediate, 2 = data transfer, 3 = branch, 4 = conditional branch, 5 = inmediate wide
 } decoded_instruction;
 
 decoded_instruction decode_instruction(u_int32_t instruction){
 
     decoded_instruction decoded;
 
-    for (int i = 0; i < 30; i++){
-        if ((instruction >> (32-opcode_list[i].lenght)) == opcode_list[i].opcode){
-            decoded.opcode = opcode_list[i].opcode;
-            decoded.rd = (instruction >> 0) & 0b11111;
-            decoded.rn = (instruction >> 5) & 0b11111;
-            decoded.rm = (instruction >> 16) & 0b11111;
-            decoded.cond = instruction & 0b1111;
-            decoded.imm6 = (instruction >> 10) & 0b111111;
-            decoded.imm12 = (instruction >> 10) & 0b111111111111;
-            decoded.imm19 = (instruction >> 5) & 0b1111111111111111111;
-            decoded.imm26 = (instruction >> 0) & 0b11111111111111111111111111;
-            decoded.immhi = (instruction >> 5) & 0b111111111111111111111111111;
-            decoded.shift = (instruction >> 22) & 0b11;
-
-            if(opcode_list[i].lenght == 11){
+    for (int i = 0; i < 26; i++){
+        if ((instruction >> (32-opcode_list[i].length)) == opcode_list[i].opcode){
+            if(opcode_list[i].type == 0){
+                decoded.opcode = opcode_list[i].opcode;
+                decoded.rm = (instruction >> 15) & 0b11111;
+                decoded.shamt = (instruction >> 10) & 0b11111;
+                decoded.rn = (instruction >> 5) & 0b11111;
+                decoded.rd = instruction & 0b11111;
                 decoded.type = 0;
-            } else if(opcode_list[i].lenght == 10){
-                decoded.type = 1;
-            } else {
-                decoded.type = 2;
+                return decoded;
             }
-            break;
+            if(opcode_list[i].type == 1){
+                decoded.opcode = opcode_list[i].opcode;
+                decoded.ALU_immediate = (instruction >> 10) & 0b111111111111;
+                decoded.rn = (instruction >> 5) & 0b11111;
+                decoded.rd = instruction & 0b11111;
+                decoded.type = 1;
+                return decoded;
+            }
+            if(opcode_list[i].type == 2){
+                decoded.opcode = opcode_list[i].opcode;
+                decoded.DT_address = (instruction >> 12) & 0b111111111;
+                decoded.op = (instruction >> 10) & 0b11;
+                decoded.rn = (instruction >> 5) & 0b11111;
+                decoded.rt = instruction & 0b11111;
+                decoded.type = 2;
+                return decoded;
+            }
+            if(opcode_list[i].type == 3){
+                decoded.opcode = opcode_list[i].opcode;
+                decoded.BR_address = instruction & 0b11111111111111111111111111;
+                decoded.type = 3;
+                return decoded;
+            }
+            if(opcode_list[i].type == 4){
+                decoded.opcode = opcode_list[i].opcode;
+                decoded.cond_branch_address = (instruction >> 5) & 0b1111111111111111111;
+                decoded.rt = (instruction >> 5) & 0b11111;
+                decoded.type = 4;
+                return decoded;
+            }
+            if(opcode_list[i].type == 5){
+                decoded.opcode = opcode_list[i].opcode;
+                decoded.MOV_inmediate = (instruction >> 5) & 0b1111111111111111;
+                decoded.rd = instruction & 0b11111;
+                decoded.type = 5;
+                return decoded;
+            }
         }
     }
     return decoded;
 }
 
+void run_instruction(decoded_instruction decoded_opcode){
+    switch (decoded_opcode.type){
+        case 0:
+            arithmetic_instruction(decoded_opcode);
+            break;
+        case 1:
+            arithmetic_immediate_instruction(decoded_opcode);
+            break;
+        case 2:
+            data_transfer_instruction(decoded_opcode);
+            break;
+        case 3:
+            branch_instruction(decoded_opcode);
+            break;
+        case 4:
+            conditional_branch_instruction(decoded_opcode);
+            break;
+        case 5:
+            inmediate_wide_instruction(decoded_opcode);
+            break;
+    }
+}
+
+
+void arithmetic_instruction(decoded_instruction decoded_opcode){
+    switch (decoded_opcode.opcode){
+        case 10001011001:
+            ADD_Extended(decoded_opcode);
+            break;
+        case 10101011001:
+            ADDS_Extended(decoded_opcode);
+            break;
+        case 10011011000:
+            MUL_Scalar_Multiplication(decoded_opcode);
+            break;
+        case 11001011001:
+            SUBS_Extended(decoded_opcode);
+            break;
+        case 11101011001:
+            CMP_Extended(decoded_opcode);
+            break;
+        case 11101010000:
+            ANDS_Shifted(decoded_opcode);
+            break;
+        case 11001010000:
+            EOR_Shifted(decoded_opcode);
+            break;
+        case 11110001100:
+            ORR_Shifted(decoded_opcode);
+            break;
+    }
+}
+
 void process_instruction()
 {
+    u_int32_t instruction = mem_read_32(CURRENT_STATE.PC);
+
+    decoded_instruction decoded = decode_instruction(instruction);
+
+    printf("Instruction: %x\n", instruction);
+    printf("Decoded: %x\n", decoded.opcode);
+    printf("Type: %d\n", decoded.type);
+    printf("RM: %x\n", decoded.rm);
+    printf("SHAMT: %x\n", decoded.shamt);
+    printf("RN: %x\n", decoded.rn);
+    printf("RD: %x\n", decoded.rd);
+    printf("ALU_IMMEDIATE: %x\n", decoded.ALU_immediate);
+    printf("DT_ADDRESS: %x\n", decoded.DT_address);
+    printf("OP: %x\n", decoded.op);
+    printf("RT: %x\n", decoded.rt);
+    printf("BR_ADDRESS: %x\n", decoded.BR_address);
+    printf("COND_BRANCH_ADDRESS: %x\n", decoded.cond_branch_address);
+    printf("MOV_INMEDIATE: %x\n", decoded.MOV_inmediate);
+
 
 }
 
