@@ -3,9 +3,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include "shell.h"
 
 typedef struct {
-    int opcode;
+    u_int32_t opcode;
     int length;
     int type;  // 0 = register, 1 = immediate, 2 = data transfer, 3 = branch, 4 = conditional branch, 5 = inmediate wide
 } tuple_t;
@@ -28,7 +29,7 @@ typedef struct {
 
 tuple_t opcode_list[26] = {
     {10001011001, 11, 0}, // ADD Extended
-    {10101011001, 11, 0}, // ADDS Extended
+    {10101011000, 11, 0}, // ADDS Extended
     {10011011000, 11, 0}, // MUL (Scalar Multiplication)
     {11001011001, 11, 0}, // SUBS Extended
     {11101011001, 11, 0}, // CMP Extended
@@ -269,9 +270,22 @@ void process_instruction()
 
 }
 
+void ADDS_Extended(decoded_instruction decoded_opcode){
+    CURRENT_STATE.REGS[decoded_opcode.rd] = CURRENT_STATE.REGS[decoded_opcode.rn] + CURRENT_STATE.REGS[decoded_opcode.rm];
+    CURRENT_STATE.FLAG_N = CURRENT_STATE.REGS[decoded_opcode.rd] < 0;
+    CURRENT_STATE.FLAG_Z = CURRENT_STATE.REGS[decoded_opcode.rd] == 0;
+}
+
+void ADD_Extended(decoded_instruction decoded_opcode){
+    CURRENT_STATE.REGS[decoded_opcode.rd] = CURRENT_STATE.REGS[decoded_opcode.rn] + CURRENT_STATE.REGS[decoded_opcode.rm];
+}
+
+void HLT(decoded_instruction decoded_opcode){
+    RUN_BIT = 0;
+}
+
 int main()
 {
     process_instruction();
     return 0;
 }
-
