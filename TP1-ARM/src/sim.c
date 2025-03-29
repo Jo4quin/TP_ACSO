@@ -3,59 +3,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include "shell.h"
+#include "instructions.h"
 
-typedef struct {
-    int opcode;
-    int length;
-    int type;  // 0 = register, 1 = immediate, 2 = data transfer, 3 = branch, 4 = conditional branch, 5 = inmediate wide
-} tuple_t;
 
-typedef struct {
-    u_int32_t opcode;
-    u_int32_t rm;
-    u_int32_t shamt;
-    u_int32_t rn;
-    u_int32_t rd;
-    u_int32_t ALU_immediate;
-    u_int32_t DT_address;
-    u_int32_t op;
-    u_int32_t rt;
-    u_int32_t BR_address;
-    u_int32_t cond_branch_address;
-    u_int32_t MOV_inmediate;
-    u_int8_t type; // 0 = register, 1 = immediate, 2 = data transfer, 3 = branch, 4 = conditional branch, 5 = inmediate wide
-} decoded_instruction;
-
-tuple_t opcode_list[26] = {
-    {10001011001, 11, 0}, // ADD Extended
-    {10101011001, 11, 0}, // ADDS Extended
-    {10011011000, 11, 0}, // MUL (Scalar Multiplication)
-    {11001011001, 11, 0}, // SUBS Extended
-    {11101011001, 11, 0}, // CMP Extended
-    {11101010000, 11, 0}, // ANDS Shifted
-    {11001010000, 11, 0}, // EOR Shifted
-    {11110001100, 11, 0}, // ORR Shifted
-    {1001000100, 10, 1},  // ADD Immediate
-    {1101001101, 10, 1},  // LSR Immediat                                       e
-    {1101001101, 10, 1},  // LSL Immediate
-    {1111000100, 10, 1},  // CMP Immediate
-    {1011000100, 10, 1},  // ADDS Immediate
-    {1101000100, 10, 1},  // SUBS Immediate
-    {11111000000, 11, 2}, // STUR (Store)
-    {00111000000, 11, 2}, // STURB (Store Byte)
-    {01111000000, 11, 2}, // STURH (Store Halfword)
-    {1111000010, 10, 2},  // LDUR (Load)
-    {01111000010, 11, 2}, // LDURH (Load Halfword)
-    {00111000010, 11, 2}, // LDURB (Load Byte)
-    {11010100010, 11, 3}, // HLT (Halt)
-    {1101011, 7, 3},      // BR (Branch to Register)
-    {000101, 6, 3}        // B (Branch)
-    {10111001, 8, 4},     // CBNZ (Conditional Branch)
-    {10110100, 8, 4},     // CBZ (Conditional Branch)
-    {11010010100, 11, 5}, // MOVZ (Inmediate Wide)
-};
-
-decoded_instruction decode_instruction(u_int32_t instruction){
+decoded_instruction decode_instruction(uint32_t instruction){
 
     decoded_instruction decoded;
 
@@ -137,28 +89,28 @@ void run_instruction(decoded_instruction decoded_opcode){
 
 void arithmetic_instruction(decoded_instruction decoded_opcode){
     switch (decoded_opcode.opcode){
-        case 10001011001:
+        case 0b10001011001:
             ADD_Extended(decoded_opcode);
             break;
-        case 10101011001:
+        case 0b10101011001:
             ADDS_Extended(decoded_opcode);
             break;
-        case 10011011000:
+        case 0b10011011000:
             MUL_Scalar_Multiplication(decoded_opcode);
             break;
-        case 11001011001:
+        case 0b11001011001:
             SUBS_Extended(decoded_opcode);
             break;
-        case 11101011001:
+        case 0b11101011001:
             CMP_Extended(decoded_opcode);
             break;
-        case 11101010000:
+        case 0b11101010000:
             ANDS_Shifted(decoded_opcode);
             break;
-        case 11001010000:
+        case 0b11001010000:
             EOR_Shifted(decoded_opcode);
             break;
-        case 11110001100:
+        case 0b11110001100:
             ORR_Shifted(decoded_opcode);
             break;
     }
@@ -166,22 +118,22 @@ void arithmetic_instruction(decoded_instruction decoded_opcode){
 
 void arithmetic_immediate_instruction(decoded_instruction decoded_opcode){  //hay que ver el tema LSR y LSL
     switch (decoded_opcode.opcode){
-        case 1001000100:
+        case 0b1001000100:
             ADD_Immediate(decoded_opcode);
             break;
-        case 1101001101:
+        case 0b1101001101:
             LSR_Immediate(decoded_opcode);
             break;
-        case 1101001101:
+        case 0b1101001100: // Updated to a unique opcode
             LSL_Immediate(decoded_opcode);
             break;
-        case 1111000100:
+        case 0b1111000100:
             CMP_Immediate(decoded_opcode);
             break;
-        case 1011000100:
+        case 0b1011000100:
             ADDS_Immediate(decoded_opcode);
             break;
-        case 1101000100:
+        case 0b1101000100:
             SUBS_Immediate(decoded_opcode);
             break;
     }
@@ -189,22 +141,19 @@ void arithmetic_immediate_instruction(decoded_instruction decoded_opcode){  //ha
 
 void data_transfer_instruction(decoded_instruction decoded_opcode){
     switch (decoded_opcode.opcode){
-        case 11111000000:
+        case 0b11111000000:
             STUR(decoded_opcode);
             break;
-        case 00111000000:
+        case 0b00111000000:
             STURB(decoded_opcode);
             break;
-        case 01111000000:
+        case 0b01111000000:
             STURH(decoded_opcode);
             break;
-        case 1111000010:
+        case 0b1111000010:
             LDUR(decoded_opcode);
             break;
-        case 01111000010:
-            LDURH(decoded_opcode);
-            break;
-        case 00111000010:
+        case 0b00111000010:
             LDURB(decoded_opcode);
             break;
     }
@@ -212,13 +161,13 @@ void data_transfer_instruction(decoded_instruction decoded_opcode){
 
 void branch_instruction(decoded_instruction decoded_opcode){
     switch (decoded_opcode.opcode){
-        case 11010100010:
+        case 0b11010100010:
             HLT(decoded_opcode);
             break;
-        case 1101011:
+        case 0b1101011:
             BR(decoded_opcode);
             break;
-        case 000101:
+        case 0b000101:
             B(decoded_opcode);
             break;
     }
@@ -226,52 +175,32 @@ void branch_instruction(decoded_instruction decoded_opcode){
 
 void conditional_branch_instruction(decoded_instruction decoded_opcode){
     switch (decoded_opcode.opcode){
-        case 10111001:
+        case 0b10111001:
             CBNZ(decoded_opcode);
             break;
-        case 10110100:
+        case 0b10110100:
             CBZ(decoded_opcode);
+            break;
+        case 0b01010100:
+            B_cond(decoded_opcode);
             break;
     }
 }
 
 void inmediate_wide_instruction(decoded_instruction decoded_opcode){
     switch (decoded_opcode.opcode){
-        case 11010010100:
+        case 0b11010010100:
             MOVZ(decoded_opcode);
             break;
     }
 }
 
 
-
 void process_instruction()
 {
-    u_int32_t instruction = mem_read_32(CURRENT_STATE.PC);
+    uint32_t instruction = mem_read_32(CURRENT_STATE.PC);
 
     decoded_instruction decoded = decode_instruction(instruction);
 
-    printf("Instruction: %x\n", instruction);
-    printf("Decoded: %x\n", decoded.opcode);
-    printf("Type: %d\n", decoded.type);
-    printf("RM: %x\n", decoded.rm);
-    printf("SHAMT: %x\n", decoded.shamt);
-    printf("RN: %x\n", decoded.rn);
-    printf("RD: %x\n", decoded.rd);
-    printf("ALU_IMMEDIATE: %x\n", decoded.ALU_immediate);
-    printf("DT_ADDRESS: %x\n", decoded.DT_address);
-    printf("OP: %x\n", decoded.op);
-    printf("RT: %x\n", decoded.rt);
-    printf("BR_ADDRESS: %x\n", decoded.BR_address);
-    printf("COND_BRANCH_ADDRESS: %x\n", decoded.cond_branch_address);
-    printf("MOV_INMEDIATE: %x\n", decoded.MOV_inmediate);
-
-
+    run_instruction(decoded);
 }
-
-int main()
-{
-    process_instruction();
-    return 0;
-}
-
