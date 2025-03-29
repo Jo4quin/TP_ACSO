@@ -1,9 +1,3 @@
-#include <stdio.h>
-#include <assert.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include "shell.h"
 #include "instructions.h"
 
 
@@ -22,7 +16,7 @@ void ADDS_Extended(decoded_instruction decoded_opcode) {
     CURRENT_STATE.PC += 4;
 }
 
-void ADDS_Inmediate(decoded_instruction decoded_opcode) {
+void ADDS_Immediate(decoded_instruction decoded_opcode) {
     // Realiza la suma entre el registro y el valor inmediato
     uint64_t result = (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rn] + (uint64_t)decoded_opcode.ALU_immediate;
 
@@ -37,7 +31,7 @@ void ADDS_Inmediate(decoded_instruction decoded_opcode) {
     CURRENT_STATE.PC += 4;
 }
 
-void SUBS_Inmediate(decoded_instruction decoded_opcode) {
+void SUBS_Immediate(decoded_instruction decoded_opcode) {
     // Realiza la resta entre el registro y el valor inmediato
     uint64_t result = (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rn] - (uint64_t)decoded_opcode.ALU_immediate;
 
@@ -75,7 +69,7 @@ void HLT(decoded_instruction decoded_opcode) {
     printf("Simulación detenida. Volviendo al shell...\n");
 }
 
-void CMP_Inmediate(decoded_instruction decoded_opcode) {
+void CMP_Immediate(decoded_instruction decoded_opcode) {
     // Realiza la resta entre el registro y el valor inmediato
     uint64_t result = (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rn] - (uint64_t)decoded_opcode.ALU_immediate;
 
@@ -97,7 +91,6 @@ void CMP_Extended(decoded_instruction decoded_opcode){
     // Incrementa el contador de programa
     CURRENT_STATE.PC += 4;
 }
-
 
 void ANDS_Shifted(decoded_instruction decoded_opcode) {
     uint32_t shifted_value;
@@ -164,7 +157,7 @@ void B(decoded_instruction decoded_opcode) {
     printf("B: Branching to address 0x%016" PRIx64 "\n", NEXT_STATE.PC);
 }
 
-void br(decoded_instruction decoded_opcode) {
+void BR(decoded_instruction decoded_opcode) {
     // Realiza el salto a la dirección calculada
     NEXT_STATE.PC = CURRENT_STATE.REGS[decoded_opcode.rn];
     // Mensaje opcional para depuración
@@ -173,7 +166,7 @@ void br(decoded_instruction decoded_opcode) {
 
 void B_cond(decoded_instruction decoded_opcode) {
     // Verifica los flags para determinar si se cumple la condición
-    swhitch(decoded_opcode.rt){
+    switch(decoded_opcode.rt) {
         case 0b0000: 
             B_equal(decoded_opcode);
             break;
@@ -195,11 +188,124 @@ void B_cond(decoded_instruction decoded_opcode) {
     }
 }
 
+void B_equal(decoded_instruction decoded_opcode){
+    if (CURRENT_STATE.FLAG_Z == 1) {
+        // Realiza el  salto a la direccion calculada
+        int32_t offset = decoded_opcode.cond_branch_address << 2; // se multiplica por 4
+
+        // Extensión de signo si el bit 18 (más significativo de imm19) es 1
+        if (offset & 0x40000) {
+            offset |= 0xFFFC0000; // Sign-extend
+        }
+
+        NEXT_STATE.PC = CURRENT_STATE.PC + offset;
+
+    } else {
+        NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+    }
+}
+
+void B_not_equal(decoded_instruction decoded_opcode) {
+    if (CURRENT_STATE.FLAG_Z == 0) {
+        // Realiza el salto a la dirección calculada
+        int32_t offset = decoded_opcode.cond_branch_address << 2; // Se multiplica por 4
+
+        // Extensión de signo si el bit 18 (más significativo de imm19) es 1
+        if (offset & 0x40000) {
+            offset |= 0xFFFC0000; // Sign-extend
+        }
+
+        NEXT_STATE.PC = CURRENT_STATE.PC + offset;
+
+    } else {
+        NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+    }
+}
+
+void B_greater(decoded_instruction decoded_opcode) {
+    if (CURRENT_STATE.FLAG_N == 0 && CURRENT_STATE.FLAG_Z == 0) {
+        // Realiza el salto a la dirección calculada
+        int32_t offset = decoded_opcode.cond_branch_address << 2; // Se multiplica por 4
+
+        // Extensión de signo si el bit 18 (más significativo de imm19) es 1
+        if (offset & 0x40000) {
+            offset |= 0xFFFC0000; // Sign-extend
+        }
+
+        NEXT_STATE.PC = CURRENT_STATE.PC + offset;
+
+    } else {
+        NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+    }
+}
+
+void B_less(decoded_instruction decoded_opcode) {
+    if (CURRENT_STATE.FLAG_N == 1) {
+        // Realiza el salto a la dirección calculada
+        int32_t offset = decoded_opcode.cond_branch_address << 2; // Se multiplica por 4
+
+        // Extensión de signo si el bit 18 (más significativo de imm19) es 1
+        if (offset & 0x40000) {
+            offset |= 0xFFFC0000; // Sign-extend
+        }
+
+        NEXT_STATE.PC = CURRENT_STATE.PC + offset;
+
+    } else {
+        NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+    }
+}
+
+void B_greater_equal(decoded_instruction decoded_opcode) {
+    if (CURRENT_STATE.FLAG_N == 0) {
+        // Realiza el salto a la dirección calculada
+        int32_t offset = decoded_opcode.cond_branch_address << 2; // Se multiplica por 4
+
+        // Extensión de signo si el bit 18 (más significativo de imm19) es 1
+        if (offset & 0x40000) {
+            offset |= 0xFFFC0000; // Sign-extend
+        }
+
+        NEXT_STATE.PC = CURRENT_STATE.PC + offset;
+
+    } else {
+        NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+    }
+}
+
+void B_less_equal(decoded_instruction decoded_opcode) {
+    if (CURRENT_STATE.FLAG_N == 1 || CURRENT_STATE.FLAG_Z == 1) {
+        // Realiza el salto a la dirección calculada
+        int32_t offset = decoded_opcode.cond_branch_address << 2; // Se multiplica por 4
+
+        // Extensión de signo si el bit 18 (más significativo de imm19) es 1
+        if (offset & 0x40000) {
+            offset |= 0xFFFC0000; // Sign-extend
+        }
+
+        NEXT_STATE.PC = CURRENT_STATE.PC + offset;
+
+    } else {
+        NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+    }
+}
+
 void ADD_Extended(decoded_instruction decoded_opcode) {
     // Realiza la suma entre los registros rn y rm
     uint64_t result = (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rn] + (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rm];
 
     // Almacena el resultado en el registro de destino rd
+    CURRENT_STATE.REGS[decoded_opcode.rd] = (uint32_t)result;
+
+    // Incrementa el contador de programa
+    CURRENT_STATE.PC += 4;
+}
+
+void ADD_Immediate(decoded_instruction decoded_opcode) {
+    // Realiza la suma entre el registro y el valor inmediato
+    uint64_t result = (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rn] + (uint64_t)decoded_opcode.ALU_immediate;
+
+    // Almacena el resultado en el registro de destino
     CURRENT_STATE.REGS[decoded_opcode.rd] = (uint32_t)result;
 
     // Incrementa el contador de programa
@@ -330,20 +436,24 @@ void STUR(decoded_instruction decoded_opcode) {
     printf("STUR: Stored 0x%016" PRIx64 " from X%d into address 0x%016" PRIx64 "\n", value, decoded_opcode.rt, address);
 }
 
-void LSR_Immediate(decoded_instruction decoded_opcode) {
+void shift(decoded_instruction decoded_opcode) {
     // Realiza el desplazamiento lógico a la derecha
-    uint64_t result = CURRENT_STATE.REGS[decoded_opcode.rn] >> decoded_opcode.ALU_immediate;
+    uint32_t imms = (decoded_opcode.ALU_immediate & 0b111111); //bit 0 a 5 del ALU_immediate
+    uint32_t immr = (decoded_opcode.ALU_immediate >> 6); //bit 6 a 11 del ALU_immediate
 
-    // Almacena el resultado en el registro destino
-    CURRENT_STATE.REGS[decoded_opcode.rd] = result;
-
-    // Incrementa el contador de programa
-    CURRENT_STATE.PC += 4;
-
-    // Mensaje opcional para depuración
-    printf("LSR: Logical shift right by %d bits. X%d = X%d >> %d = 0x%016" PRIx64 "\n",
-           decoded_opcode.ALU_immediate, decoded_opcode.rd, decoded_opcode.rn,
-           decoded_opcode.ALU_immediate, result);
+    if(imms == 63){
+        NEXT_STATE.REGS[decoded_opcode.rd] = CURRENT_STATE.REGS[decoded_opcode.rn] >> immr; 
+        NEXT_STATE.FLAG_N = (NEXT_STATE.REGS[decoded_opcode.rd] < 0) ? 1 : 0;  
+        NEXT_STATE.FLAG_Z = (NEXT_STATE.REGS[decoded_opcode.rd] == 0) ? 1 : 0;
+    }
+    else{
+    uint32_t neg_imms = ~(imms);
+    NEXT_STATE.REGS[decoded_opcode.rd] = CURRENT_STATE.REGS[decoded_opcode.rn] << neg_imms;
+    NEXT_STATE.FLAG_N = (NEXT_STATE.REGS[decoded_opcode.rd] < 0) ? 1 : 0;  
+    NEXT_STATE.FLAG_Z = (NEXT_STATE.REGS[decoded_opcode.rd] == 0) ? 1 : 0;
+    printf("Valor de neg_imms: %d\n", neg_imms);
+    printf("Valor de imms: %d\n", imms);
+    }
 }
 
 void BLE(decoded_instruction decoded_opcode) {
@@ -362,5 +472,53 @@ void BLE(decoded_instruction decoded_opcode) {
 
         // Mensaje opcional para depuración
         printf("BLE: Condition not met, continuing to next instruction.\n");
+    }
+}
+
+void MUL(decoded_instruction decoded_opcode) {
+    // Realiza la multiplicación entre los registros rn y rm
+    uint64_t result = (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rn] * (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rm];
+
+    // Almacena el resultado en el registro de destino rd
+    NEXT_STATE.REGS[decoded_opcode.rd] = (uint32_t)result;
+
+    // Incrementa el contador de programa
+    CURRENT_STATE.PC += 4;
+
+    // Mensaje opcional para depuración
+    printf("MUL: X%d = X%d * X%d = 0x%016" PRIx64 "\n", decoded_opcode.rd, decoded_opcode.rn, decoded_opcode.rm, result);
+}
+
+void CBZ(decoded_instruction decoded_instruction) {
+    int32_t offset = decoded_instruction.cond_branch_address << 2; // Se multiplica por 4
+
+    // Extensión de signo si el bit 18 (más significativo de imm19) es 1
+    if (offset & 0x40000) {
+        offset |= 0xFFFC0000; // Sign-extend
+    }
+
+    if (CURRENT_STATE.REGS[decoded_instruction.rt] == 0b0000) {
+        // Realiza el salto a la dirección calculada
+        NEXT_STATE.PC = CURRENT_STATE.PC + offset;
+    } else {
+        // Incrementa el contador de programa si no se cumple la condición
+        NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+    }
+}
+
+void CBNZ(decoded_instruction decoded_instruction) {
+    int32_t offset = decoded_instruction.cond_branch_address << 2; // Se multiplica por 4
+
+    // Extensión de signo si el bit 18 (más significativo de imm19) es 1
+    if (offset & 0x40000) {
+        offset |= 0xFFFC0000; // Sign-extend
+    }
+
+    if (CURRENT_STATE.REGS[decoded_instruction.rt] != 0b0000) {
+        // Realiza el salto a la dirección calculada
+        NEXT_STATE.PC = CURRENT_STATE.PC + offset;
+    } else {
+        // Incrementa el contador de programa si no se cumple la condición
+        NEXT_STATE.PC = CURRENT_STATE.PC + 4;
     }
 }
