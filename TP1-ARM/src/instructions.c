@@ -2,48 +2,51 @@
 
 
 void ADDS_Extended(decoded_instruction decoded_opcode) {
+    printf("ADD_Extended\n");
     // Realiza la suma entre el registro y el valor inmediato
     uint64_t result = (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rn] + (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rm];
 
     // Almacena el resultado en el registro de destino
-    CURRENT_STATE.REGS[decoded_opcode.rd] = (uint32_t)result;
+    NEXT_STATE.REGS[decoded_opcode.rd] = (uint32_t)result;
 
     // Actualiza los flags del procesador
     NEXT_STATE.FLAG_Z = (CURRENT_STATE.REGS[decoded_opcode.rd] == 0); // Flag de cero
-    NEXT_STATE.FLAG_N = (CURRENT_STATE.REGS[decoded_opcode.rd] >> 31) & 1; // Flag de negativo (bit más significativo)
+    NEXT_STATE.FLAG_N = (CURRENT_STATE.REGS[decoded_opcode.rd] < 0); // Flag de negativo (bit más significativo)
 
     // Incrementa el contador de programa
-    CURRENT_STATE.PC += 4;
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
 
 void ADDS_Immediate(decoded_instruction decoded_opcode) {
+    printf("ADD Immediate\n");
     // Realiza la suma entre el registro y el valor inmediato
     uint64_t result = (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rn] + (uint64_t)decoded_opcode.ALU_immediate;
 
     // Almacena el resultado en el registro de destino
-    CURRENT_STATE.REGS[decoded_opcode.rd] = (uint32_t)result;
+    NEXT_STATE.REGS[decoded_opcode.rd] = (uint32_t)result;
 
     // Actualiza los flags del procesador
     NEXT_STATE.FLAG_Z = (CURRENT_STATE.REGS[decoded_opcode.rd] == 0); // Flag de cero
     NEXT_STATE.FLAG_N = (CURRENT_STATE.REGS[decoded_opcode.rd] >> 31) & 1; // Flag de negativo (bit más significativo)
 
     // Incrementa el contador de programa
-    CURRENT_STATE.PC += 4;
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
 
 void SUBS_Immediate(decoded_instruction decoded_opcode) {
+    printf("SUBS Immediate\n");
     // Realiza la resta entre el registro y el valor inmediato
     uint64_t result = (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rn] - (uint64_t)decoded_opcode.ALU_immediate;
 
     // Almacena el resultado en el registro de destino
-    CURRENT_STATE.REGS[decoded_opcode.rd] = (uint32_t)result;
+    NEXT_STATE.REGS[decoded_opcode.rd] = (uint32_t)result;
 
     // Actualiza los flags del procesador
     NEXT_STATE.FLAG_Z = (CURRENT_STATE.REGS[decoded_opcode.rd] == 0); // Flag de cero
     NEXT_STATE.FLAG_N = (CURRENT_STATE.REGS[decoded_opcode.rd] >> 31) & 1; // Flag de negativo (bit más significativo)
 
     // Incrementa el contador de programa
-    CURRENT_STATE.PC += 4;
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
 
 void SUBS_Extended(decoded_instruction decoded_opcode) {
@@ -51,14 +54,14 @@ void SUBS_Extended(decoded_instruction decoded_opcode) {
     uint64_t result = (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rn] - (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rm];
 
     // Almacena el resultado en el registro de destino rd
-    CURRENT_STATE.REGS[decoded_opcode.rd] = (uint32_t)result;
+    NEXT_STATE.REGS[decoded_opcode.rd] = (uint32_t)result;
 
     // Actualiza los flags del procesador
     NEXT_STATE.FLAG_Z = (CURRENT_STATE.REGS[decoded_opcode.rd] == 0); // Flag de cero
     NEXT_STATE.FLAG_N = (CURRENT_STATE.REGS[decoded_opcode.rd] >> 31) & 1; // Flag de negativo (bit más significativo)
 
     // Incrementa el contador de programa
-    CURRENT_STATE.PC += 4;
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
 
 void HLT(decoded_instruction decoded_opcode) {
@@ -75,10 +78,10 @@ void CMP_Immediate(decoded_instruction decoded_opcode) {
 
     // No se almacena el resultado, solo se actualizan los flags del procesador
     NEXT_STATE.FLAG_Z = ((uint32_t)result == 0); // Flag de cero
-    NEXT_STATE.FLAG_N = ((uint32_t)result >> 31) & 1; // Flag de negativo (bit más significativo)
+    NEXT_STATE.FLAG_N = ((uint32_t)result < 0); // Flag de negativo (bit más significativo)
 
     // Incrementa el contador de programa
-    CURRENT_STATE.PC += 4;
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
 
 void CMP_Extended(decoded_instruction decoded_opcode){
@@ -86,10 +89,10 @@ void CMP_Extended(decoded_instruction decoded_opcode){
 
     // No se almacena el resultado, solo se actualizan los flags del procesador
     NEXT_STATE.FLAG_Z = ((uint32_t)result == 0); // Flag de cero
-    NEXT_STATE.FLAG_N = ((uint32_t)result >> 31) & 1; // Flag de negativo (bit más significativo)
+    NEXT_STATE.FLAG_N = ((uint32_t)result < 0); // Flag de negativo (bit más significativo)
 
     // Incrementa el contador de programa
-    CURRENT_STATE.PC += 4;
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
 
 void ANDS_Shifted(decoded_instruction decoded_opcode) {
@@ -112,14 +115,14 @@ void ANDS_Shifted(decoded_instruction decoded_opcode) {
     uint32_t result = CURRENT_STATE.REGS[decoded_opcode.rn] & shifted_value;
 
     // Almacena el resultado en el registro de destino
-    CURRENT_STATE.REGS[decoded_opcode.rd] = result;
+    NEXT_STATE.REGS[decoded_opcode.rd] = result;
 
     // Actualiza los flags del procesador
     NEXT_STATE.FLAG_Z = (result == 0); // Flag de cero
     NEXT_STATE.FLAG_N = (result >> 31) & 1; // Flag de negativo (bit más significativo)
 
     // Incrementa el contador de programa
-    CURRENT_STATE.PC += 4;
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
 
 void EOR_Shifted(decoded_instruction decoded_opcode) {
@@ -127,12 +130,12 @@ void EOR_Shifted(decoded_instruction decoded_opcode) {
     uint32_t result = CURRENT_STATE.REGS[decoded_opcode.rn] ^ CURRENT_STATE.REGS[decoded_opcode.rm];
 
     // Almacena el resultado en el registro de destino rd
-    CURRENT_STATE.REGS[decoded_opcode.rd] = result;
+    NEXT_STATE.REGS[decoded_opcode.rd] = result;
 
     // No se actualizan los flags, ya que no se especifica en la descripción.
 
     // Incrementa el contador de programa
-    CURRENT_STATE.PC += 4;
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
 
 void ORR_Shifted(decoded_instruction decoded_opcode) {
@@ -295,10 +298,10 @@ void ADD_Extended(decoded_instruction decoded_opcode) {
     uint64_t result = (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rn] + (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rm];
 
     // Almacena el resultado en el registro de destino rd
-    CURRENT_STATE.REGS[decoded_opcode.rd] = (uint32_t)result;
+    NEXT_STATE.REGS[decoded_opcode.rd] = (uint32_t)result;
 
     // Incrementa el contador de programa
-    CURRENT_STATE.PC += 4;
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
 
 void ADD_Immediate(decoded_instruction decoded_opcode) {
@@ -306,19 +309,17 @@ void ADD_Immediate(decoded_instruction decoded_opcode) {
     uint64_t result = (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rn] + (uint64_t)decoded_opcode.ALU_immediate;
 
     // Almacena el resultado en el registro de destino
-    CURRENT_STATE.REGS[decoded_opcode.rd] = (uint32_t)result;
+    NEXT_STATE.REGS[decoded_opcode.rd] = (uint32_t)result;
 
     // Incrementa el contador de programa
-    CURRENT_STATE.PC += 4;
-}
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;}
 
 void MOVZ(decoded_instruction decoded_opcode) {
     // Caso hw = 0 (sin desplazamiento)
-    CURRENT_STATE.REGS[decoded_opcode.rd] = decoded_opcode.MOV_inmediate;
+    NEXT_STATE.REGS[decoded_opcode.rd] = decoded_opcode.MOV_inmediate;
 
     // Incrementa el contador de programa
-    CURRENT_STATE.PC += 4;
-
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
     // Mensaje opcional para depuración
     printf("MOVZ: X%d = %d\n", decoded_opcode.rd, decoded_opcode.MOV_inmediate);
 }
@@ -331,11 +332,10 @@ void LDURB(decoded_instruction decoded_opcode) {
     uint8_t byte_value = mem_read_32(address) & 0xFF; // Solo los primeros 8 bits
 
     // Almacena el valor en el registro destino (W1), con los 56 bits superiores en cero
-    CURRENT_STATE.REGS[decoded_opcode.rt] = (uint64_t)byte_value;
+    NEXT_STATE.REGS[decoded_opcode.rt] = (uint64_t)byte_value;
 
     // Incrementa el contador de programa
-    CURRENT_STATE.PC += 4;
-
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
     // Mensaje opcional para depuración
     printf("LDURB: Loaded byte 0x%02x from address 0x%016" PRIx64 " into W%d\n", byte_value, address, decoded_opcode.rt);
 }
@@ -349,11 +349,10 @@ void LDUR(decoded_instruction decoded_opcode) {
     value |= ((uint64_t)mem_read_32(address + 4)) << 32; // Lee los siguientes 4 bytes y combina
 
     // Almacena el valor en el registro destino (X1)
-    CURRENT_STATE.REGS[decoded_opcode.rt] = value;
+    NEXT_STATE.REGS[decoded_opcode.rt] = value;
 
     // Incrementa el contador de programa
-    CURRENT_STATE.PC += 4;
-
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
     // Mensaje opcional para depuración
     printf("LDUR: Loaded 0x%016" PRIx64 " from address 0x%016" PRIx64 " into X%d\n", value, address, decoded_opcode.rt);
 }
@@ -366,11 +365,10 @@ void LDURH(decoded_instruction decoded_opcode) {
     uint16_t halfword_value = mem_read_32(address) & 0xFFFF; // Solo los primeros 16 bits
 
     // Almacena el valor en el registro destino (W1), con los 48 bits superiores en cero
-    CURRENT_STATE.REGS[decoded_opcode.rt] = (uint64_t)halfword_value;
+    NEXT_STATE.REGS[decoded_opcode.rt] = (uint64_t)halfword_value;
 
     // Incrementa el contador de programa
-    CURRENT_STATE.PC += 4;
-
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
     // Mensaje opcional para depuración
     printf("LDURH: Loaded halfword 0x%04x from address 0x%016" PRIx64 " into W%d\n", halfword_value, address, decoded_opcode.rt);
 }
@@ -391,8 +389,7 @@ void STURH(decoded_instruction decoded_opcode) {
     mem_write_32(address + 1, (mem_read_32(address + 1) & 0xFFFFFF00) | upper_byte); // Escribe el byte más significativo
 
     // Incrementa el contador de programa
-    CURRENT_STATE.PC += 4;
-
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
     // Mensaje opcional para depuración
     printf("STURH: Stored halfword 0x%04x from W%d into address 0x%016" PRIx64 "\n", halfword_value, decoded_opcode.rt, address);
 }
@@ -408,8 +405,7 @@ void STURB(decoded_instruction decoded_opcode) {
     mem_write_32(address, (mem_read_32(address) & 0xFFFFFF00) | byte_value);
 
     // Incrementa el contador de programa
-    CURRENT_STATE.PC += 4;
-
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
     // Mensaje opcional para depuración
     printf("STURB: Stored byte 0x%02x from X%d into address 0x%016" PRIx64 "\n", byte_value, decoded_opcode.rt, address);
 }
@@ -430,8 +426,7 @@ void STUR(decoded_instruction decoded_opcode) {
     mem_write_32(address + 4, upper_word);   // Escribe los siguientes 32 bits
 
     // Incrementa el contador de programa
-    CURRENT_STATE.PC += 4;
-
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
     // Mensaje opcional para depuración
     printf("STUR: Stored 0x%016" PRIx64 " from X%d into address 0x%016" PRIx64 "\n", value, decoded_opcode.rt, address);
 }
@@ -468,8 +463,7 @@ void BLE(decoded_instruction decoded_opcode) {
         printf("BLE: Branching to address 0x%016" PRIx64 "\n", CURRENT_STATE.PC);
     } else {
         // Incrementa el contador de programa si no se cumple la condición
-        CURRENT_STATE.PC += 4;
-
+        NEXT_STATE.PC = CURRENT_STATE.PC + 4;
         // Mensaje opcional para depuración
         printf("BLE: Condition not met, continuing to next instruction.\n");
     }
@@ -483,8 +477,7 @@ void MUL(decoded_instruction decoded_opcode) {
     NEXT_STATE.REGS[decoded_opcode.rd] = (uint32_t)result;
 
     // Incrementa el contador de programa
-    CURRENT_STATE.PC += 4;
-
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
     // Mensaje opcional para depuración
     printf("MUL: X%d = X%d * X%d = 0x%016" PRIx64 "\n", decoded_opcode.rd, decoded_opcode.rn, decoded_opcode.rm, result);
 }

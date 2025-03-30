@@ -6,6 +6,15 @@
 #include "shell.h"
 #include "instructions.h"
 
+void print_binary(uint32_t n) {
+    for (int i = 31; i >= 0; i--) {
+        printf("%d", (n >> i) & 1);
+        if (i % 4 == 0)  // Opcional: agrega un espacio cada 4 bits para mejorar la legibilidad
+            printf(" ");
+    }
+    printf("\n");
+}
+
 typedef struct {
     uint32_t opcode;
     int length;
@@ -15,9 +24,9 @@ typedef struct {
 // Lista de tuplas con los opcodes de las instrucciones
 tuple_t opcode_list[25] = {
     {0b10001011001, 11, 0}, // ADD Extended
-    {0b10101011001, 11, 0}, // ADDS Extended
+    {0b10101011000, 11, 0}, // ADDS Extended
     {0b10011011000, 11, 0}, // MUL (Scalar Multiplication)
-    {0b11001011001, 11, 0}, // SUBS Extended
+    {0b11101011000, 11, 0}, // SUBS Extended
     {0b11101011001, 11, 0}, // CMP Extended
     {0b11101010000, 11, 0}, // ANDS Shifted
     {0b11001010000, 11, 0}, // EOR Shifted
@@ -49,7 +58,7 @@ decoded_instruction decode_instruction(uint32_t instruction){
         if ((instruction >> (32-opcode_list[i].length)) == opcode_list[i].opcode){
             if(opcode_list[i].type == 0){
                 decoded.opcode = opcode_list[i].opcode;
-                decoded.rm = (instruction >> 15) & 0b11111;
+                decoded.rm = (instruction >> 16) & 0b11111;
                 decoded.shamt = (instruction >> 10) & 0b11111;
                 decoded.rn = (instruction >> 5) & 0b11111;
                 decoded.rd = instruction & 0b11111;
@@ -126,13 +135,13 @@ void arithmetic_instruction(decoded_instruction decoded_opcode){
         case 0b10001011001:
             ADD_Extended(decoded_opcode);
             break;
-        case 0b10101011001:
+        case 0b10101011000:
             ADDS_Extended(decoded_opcode);
             break;
         case 0b10011011000:
             MUL(decoded_opcode);
             break;
-        case 0b11001011001:
+        case 0b11101011000:
             SUBS_Extended(decoded_opcode);
             break;
         case 0b11101011001:
@@ -162,6 +171,7 @@ void arithmetic_immediate_instruction(decoded_instruction decoded_opcode){  //ha
             CMP_Immediate(decoded_opcode);
             break;
         case 0b1011000100:
+            printf("ADD Immediate\n");
             ADDS_Immediate(decoded_opcode);
             break;
         case 0b1101000100:
@@ -231,23 +241,37 @@ void process_instruction()
 {
     uint32_t instruction = mem_read_32(CURRENT_STATE.PC);
 
+    printf("Instruction: ");
+    print_binary(instruction);
+
     decoded_instruction decoded = decode_instruction(instruction);
 
-    printf("Instruction: %x\n", instruction);
-    printf("Decoded: %x\n", decoded.opcode);
-    printf("Type: %d\n", decoded.type);
-    printf("RM: %x\n", decoded.rm);
-    printf("SHAMT: %x\n", decoded.shamt);
-    printf("RN: %x\n", decoded.rn);
-    printf("RD: %x\n", decoded.rd);
-    printf("ALU_IMMEDIATE: %x\n", decoded.ALU_immediate);
-    printf("DT_ADDRESS: %x\n", decoded.DT_address);
-    printf("OP: %x\n", decoded.op);
-    printf("RT: %x\n", decoded.rt);
-    printf("BR_ADDRESS: %x\n", decoded.BR_address);
-    printf("COND_BRANCH_ADDRESS: %x\n", decoded.cond_branch_address);
-    printf("MOV_INMEDIATE: %x\n", decoded.MOV_inmediate);
+    printf("Decoded: ");            //sims ok
+    print_binary(decoded.opcode);
+    printf("rm: ");                 //
+    print_binary(decoded.rm);
+    printf("shamt: ");
+    print_binary(decoded.shamt);
+    printf("rn: ");
+    print_binary(decoded.rn);
+    printf("rd: ");
+    print_binary(decoded.rd);
+    printf("ALU_immediate: ");
+    print_binary(decoded.ALU_immediate);
+    printf("DT_address: ");
+    print_binary(decoded.DT_address);
+    printf("op: ");
+    print_binary(decoded.op);
+    printf("rt: ");
+    print_binary(decoded.rt);
+    printf("BR_address: ");
+    print_binary(decoded.BR_address);
+    printf("cond_branch_address: ");
+    print_binary(decoded.cond_branch_address);
+    printf("MOV_inmediate: ");
+    print_binary(decoded.MOV_inmediate);
+    printf("type: %d\n", decoded.type);
 
-
+    run_instruction(decoded);
 }
 
