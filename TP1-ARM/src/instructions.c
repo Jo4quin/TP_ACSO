@@ -50,6 +50,7 @@ void SUBS_Immediate(decoded_instruction decoded_opcode) {
 }
 
 void SUBS_Extended(decoded_instruction decoded_opcode) {
+    printf("SUBS Extended\n");
     // Realiza la resta entre los registros rn y rm
     uint64_t result = (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rn] - (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rm];
 
@@ -73,6 +74,7 @@ void HLT(decoded_instruction decoded_opcode) {
 }
 
 void CMP_Immediate(decoded_instruction decoded_opcode) {
+    printf("CMP Immediate\n");
     // Realiza la resta entre el registro y el valor inmediato
     uint64_t result = (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rn] - (uint64_t)decoded_opcode.ALU_immediate;
 
@@ -85,6 +87,7 @@ void CMP_Immediate(decoded_instruction decoded_opcode) {
 }
 
 void CMP_Extended(decoded_instruction decoded_opcode){
+    printf("CMP Extended\n");
     uint64_t result = (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rn] - (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rm];
 
     // No se almacena el resultado, solo se actualizan los flags del procesador
@@ -96,23 +99,9 @@ void CMP_Extended(decoded_instruction decoded_opcode){
 }
 
 void ANDS_Shifted(decoded_instruction decoded_opcode) {
-    uint32_t shifted_value;
-
-    // Aplica el desplazamiento (shift) al registro rm
-    switch (decoded_opcode.shamt) {
-        case 0b00: // LSL (Logical Shift Left)
-            shifted_value = CURRENT_STATE.REGS[decoded_opcode.rm] << decoded_opcode.ALU_immediate;
-            break;
-        case 0b01: // LSR (Logical Shift Right)
-            shifted_value = CURRENT_STATE.REGS[decoded_opcode.rm] >> decoded_opcode.ALU_immediate;
-            break;
-        default:
-            printf("Error: Tipo de desplazamiento no reconocido.\n");
-            return;
-    }
-
-    // Realiza la operación AND entre rn y el valor desplazado
-    uint32_t result = CURRENT_STATE.REGS[decoded_opcode.rn] & shifted_value;
+    printf("ANDS Shifted\n");
+    // Realiza la operación AND entre rn y el valor inmediato
+    uint32_t result = CURRENT_STATE.REGS[decoded_opcode.rn] & CURRENT_STATE.REGS[decoded_opcode.rm];
 
     // Almacena el resultado en el registro de destino
     NEXT_STATE.REGS[decoded_opcode.rd] = result;
@@ -126,6 +115,7 @@ void ANDS_Shifted(decoded_instruction decoded_opcode) {
 }
 
 void EOR_Shifted(decoded_instruction decoded_opcode) {
+    printf("EOR Shifted\n");
     // Realiza la operación XOR entre los registros rn y rm
     uint32_t result = CURRENT_STATE.REGS[decoded_opcode.rn] ^ CURRENT_STATE.REGS[decoded_opcode.rm];
 
@@ -139,6 +129,7 @@ void EOR_Shifted(decoded_instruction decoded_opcode) {
 }
 
 void ORR_Shifted(decoded_instruction decoded_opcode) {
+    printf("ORR Shifted\n");
     // Realiza la operación OR entre los registros rn y rm
     uint32_t result = CURRENT_STATE.REGS[decoded_opcode.rn] | CURRENT_STATE.REGS[decoded_opcode.rm];
 
@@ -152,6 +143,7 @@ void ORR_Shifted(decoded_instruction decoded_opcode) {
 }
 
 void B(decoded_instruction decoded_opcode) {
+    printf("B\n");
     // Realiza el salto a la dirección calculada
     int32_t offset = (int32_t)(decoded_opcode.BR_address << 6) >> 6; // Sign-extend el desplazamiento
     NEXT_STATE.PC = CURRENT_STATE.PC + (offset << 2); // El desplazamiento es en palabras, se multiplica por 4
@@ -161,6 +153,7 @@ void B(decoded_instruction decoded_opcode) {
 }
 
 void BR(decoded_instruction decoded_opcode) {
+    printf("BR\n");
     // Realiza el salto a la dirección calculada
     NEXT_STATE.PC = CURRENT_STATE.REGS[decoded_opcode.rn];
     // Mensaje opcional para depuración
@@ -168,6 +161,7 @@ void BR(decoded_instruction decoded_opcode) {
 }
 
 void B_cond(decoded_instruction decoded_opcode) {
+    printf("B_cond\n");
     // Verifica los flags para determinar si se cumple la condición
     switch(decoded_opcode.rt) {
         case 0b0000: 
@@ -192,6 +186,7 @@ void B_cond(decoded_instruction decoded_opcode) {
 }
 
 void B_equal(decoded_instruction decoded_opcode){
+    printf("B_equal\n");
     if (CURRENT_STATE.FLAG_Z == 1) {
         // Realiza el  salto a la direccion calculada
         int32_t offset = decoded_opcode.cond_branch_address << 2; // se multiplica por 4
@@ -209,6 +204,7 @@ void B_equal(decoded_instruction decoded_opcode){
 }
 
 void B_not_equal(decoded_instruction decoded_opcode) {
+    printf("B_not_equal\n");
     if (CURRENT_STATE.FLAG_Z == 0) {
         // Realiza el salto a la dirección calculada
         int32_t offset = decoded_opcode.cond_branch_address << 2; // Se multiplica por 4
@@ -226,6 +222,7 @@ void B_not_equal(decoded_instruction decoded_opcode) {
 }
 
 void B_greater(decoded_instruction decoded_opcode) {
+    printf("B_greater\n");
     if (CURRENT_STATE.FLAG_N == 0 && CURRENT_STATE.FLAG_Z == 0) {
         // Realiza el salto a la dirección calculada
         int32_t offset = decoded_opcode.cond_branch_address << 2; // Se multiplica por 4
@@ -243,6 +240,7 @@ void B_greater(decoded_instruction decoded_opcode) {
 }
 
 void B_less(decoded_instruction decoded_opcode) {
+    printf("B_less\n");
     if (CURRENT_STATE.FLAG_N == 1) {
         // Realiza el salto a la dirección calculada
         int32_t offset = decoded_opcode.cond_branch_address << 2; // Se multiplica por 4
@@ -260,6 +258,7 @@ void B_less(decoded_instruction decoded_opcode) {
 }
 
 void B_greater_equal(decoded_instruction decoded_opcode) {
+    printf("B_greater_equal\n");
     if (CURRENT_STATE.FLAG_N == 0) {
         // Realiza el salto a la dirección calculada
         int32_t offset = decoded_opcode.cond_branch_address << 2; // Se multiplica por 4
@@ -277,6 +276,7 @@ void B_greater_equal(decoded_instruction decoded_opcode) {
 }
 
 void B_less_equal(decoded_instruction decoded_opcode) {
+    printf("B_less_equal\n");
     if (CURRENT_STATE.FLAG_N == 1 || CURRENT_STATE.FLAG_Z == 1) {
         // Realiza el salto a la dirección calculada
         int32_t offset = decoded_opcode.cond_branch_address << 2; // Se multiplica por 4
@@ -294,6 +294,7 @@ void B_less_equal(decoded_instruction decoded_opcode) {
 }
 
 void ADD_Extended(decoded_instruction decoded_opcode) {
+    printf("ADD Extended\n");
     // Realiza la suma entre los registros rn y rm
     uint64_t result = (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rn] + (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rm];
 
@@ -305,6 +306,7 @@ void ADD_Extended(decoded_instruction decoded_opcode) {
 }
 
 void ADD_Immediate(decoded_instruction decoded_opcode) {
+    printf("ADD Immediate\n");
     // Realiza la suma entre el registro y el valor inmediato
     uint64_t result = (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rn] + (uint64_t)decoded_opcode.ALU_immediate;
 
@@ -315,6 +317,7 @@ void ADD_Immediate(decoded_instruction decoded_opcode) {
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;}
 
 void MOVZ(decoded_instruction decoded_opcode) {
+    printf("MOVZ\n");
     // Caso hw = 0 (sin desplazamiento)
     NEXT_STATE.REGS[decoded_opcode.rd] = decoded_opcode.MOV_inmediate;
 
@@ -325,6 +328,7 @@ void MOVZ(decoded_instruction decoded_opcode) {
 }
 
 void LDURB(decoded_instruction decoded_opcode) {
+    printf("LDURB\n");
     // Calcula la dirección de memoria: base (X2) + desplazamiento inmediato (DT_address)
     uint64_t address = CURRENT_STATE.REGS[decoded_opcode.rn] + decoded_opcode.DT_address;
 
@@ -341,6 +345,7 @@ void LDURB(decoded_instruction decoded_opcode) {
 }
 
 void LDUR(decoded_instruction decoded_opcode) {
+    printf("LDUR\n");
     // Calcula la dirección de memoria: base (X2) + desplazamiento inmediato (DT_address)
     uint64_t address = CURRENT_STATE.REGS[decoded_opcode.rn] + decoded_opcode.DT_address;
 
@@ -358,6 +363,7 @@ void LDUR(decoded_instruction decoded_opcode) {
 }
 
 void LDURH(decoded_instruction decoded_opcode) {
+    printf("LDURH\n");
     // Calcula la dirección de memoria: base (X2) + desplazamiento inmediato (DT_address)
     uint64_t address = CURRENT_STATE.REGS[decoded_opcode.rn] + decoded_opcode.DT_address;
 
@@ -374,6 +380,7 @@ void LDURH(decoded_instruction decoded_opcode) {
 }
 
 void STURH(decoded_instruction decoded_opcode) {
+    printf("STURH\n");
     // Calcula la dirección de memoria: base (X2) + desplazamiento inmediato (DT_address)
     uint64_t address = CURRENT_STATE.REGS[decoded_opcode.rn] + decoded_opcode.DT_address;
 
@@ -395,6 +402,7 @@ void STURH(decoded_instruction decoded_opcode) {
 }
 
 void STURB(decoded_instruction decoded_opcode) {
+    printf("STURB\n");
     // Calcula la dirección de memoria: base (X2) + desplazamiento inmediato (DT_address)
     uint64_t address = CURRENT_STATE.REGS[decoded_opcode.rn] + decoded_opcode.DT_address;
 
@@ -411,6 +419,7 @@ void STURB(decoded_instruction decoded_opcode) {
 }
 
 void STUR(decoded_instruction decoded_opcode) {
+    printf("STUR\n");
     // Calcula la dirección de memoria: base (X2) + desplazamiento inmediato (DT_address)
     uint64_t address = CURRENT_STATE.REGS[decoded_opcode.rn] + decoded_opcode.DT_address;
 
@@ -432,6 +441,7 @@ void STUR(decoded_instruction decoded_opcode) {
 }
 
 void shift(decoded_instruction decoded_opcode) {
+    printf("Shift\n");
     // Realiza el desplazamiento lógico a la derecha
     uint32_t imms = (decoded_opcode.ALU_immediate & 0b111111); //bit 0 a 5 del ALU_immediate
     uint32_t immr = (decoded_opcode.ALU_immediate >> 6); //bit 6 a 11 del ALU_immediate
@@ -452,6 +462,7 @@ void shift(decoded_instruction decoded_opcode) {
 }
 
 void BLE(decoded_instruction decoded_opcode) {
+    printf("BLE\n");
     // Verifica los flags para determinar si X1 <= X2
 
     if (NEXT_STATE.FLAG_Z == 1 || NEXT_STATE.FLAG_N == 1) {
@@ -470,6 +481,7 @@ void BLE(decoded_instruction decoded_opcode) {
 }
 
 void MUL(decoded_instruction decoded_opcode) {
+    printf("MUL\n");
     // Realiza la multiplicación entre los registros rn y rm
     uint64_t result = (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rn] * (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rm];
 
@@ -483,6 +495,7 @@ void MUL(decoded_instruction decoded_opcode) {
 }
 
 void CBZ(decoded_instruction decoded_instruction) {
+    printf("CBZ\n");
     int32_t offset = decoded_instruction.cond_branch_address << 2; // Se multiplica por 4
 
     // Extensión de signo si el bit 18 (más significativo de imm19) es 1
@@ -500,6 +513,7 @@ void CBZ(decoded_instruction decoded_instruction) {
 }
 
 void CBNZ(decoded_instruction decoded_instruction) {
+    printf("CBNZ\n");
     int32_t offset = decoded_instruction.cond_branch_address << 2; // Se multiplica por 4
 
     // Extensión de signo si el bit 18 (más significativo de imm19) es 1
