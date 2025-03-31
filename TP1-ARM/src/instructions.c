@@ -310,13 +310,10 @@ void ADD_Immediate(decoded_instruction decoded_opcode) {
 
 void MOVZ(decoded_instruction decoded_opcode) {
     printf("MOVZ\n");
-    // Caso hw = 0 (sin desplazamiento)
     NEXT_STATE.REGS[decoded_opcode.rd] = decoded_opcode.MOV_inmediate;
-
-    // Incrementa el contador de programa
+    NEXT_STATE.FLAG_N = (NEXT_STATE.REGS[decoded_opcode.rd] < 0);
+    NEXT_STATE.FLAG_Z = (NEXT_STATE.REGS[decoded_opcode.rd] == 0);
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
-    // Mensaje opcional para depuración
-    printf("MOVZ: X%d = %d\n", decoded_opcode.rd, decoded_opcode.MOV_inmediate);
 }
 
 void LDURB(decoded_instruction decoded_opcode) {
@@ -434,23 +431,22 @@ void STUR(decoded_instruction decoded_opcode) {
 
 void shift(decoded_instruction decoded_opcode) {
     printf("Shift\n");
-    // Realiza el desplazamiento lógico a la derecha
-    uint32_t imms = (decoded_opcode.ALU_immediate & 0b111111); //bit 0 a 5 del ALU_immediate
-    uint32_t immr = (decoded_opcode.ALU_immediate >> 6); //bit 6 a 11 del ALU_immediate
-
-    if(imms == 63){
-        NEXT_STATE.REGS[decoded_opcode.rd] = CURRENT_STATE.REGS[decoded_opcode.rn] >> immr; 
-        NEXT_STATE.FLAG_N = (NEXT_STATE.REGS[decoded_opcode.rd] < 0) ? 1 : 0;  
-        NEXT_STATE.FLAG_Z = (NEXT_STATE.REGS[decoded_opcode.rd] == 0) ? 1 : 0;
+    uint32_t immr = (decoded_opcode.ALU_immediate >> 6) & 0b111111;    
+    uint32_t imms = (decoded_opcode.ALU_immediate) & 0b111111;
+    
+    uint64_t source = CURRENT_STATE.REGS[decoded_opcode.rn];
+    uint64_t result;
+    
+    if (imms != 63) {
+        uint32_t shift = 63 - imms;
+        result = (shift >= 64) ? 0 : (source << shift);
+    } else {
+        uint32_t shift = immr;
+        result = (shift >= 64) ? 0 : (source >> shift);
     }
-    else{
-    uint32_t neg_imms = ~(imms);
-    NEXT_STATE.REGS[decoded_opcode.rd] = CURRENT_STATE.REGS[decoded_opcode.rn] << neg_imms;
-    NEXT_STATE.FLAG_N = (NEXT_STATE.REGS[decoded_opcode.rd] < 0) ? 1 : 0;  
-    NEXT_STATE.FLAG_Z = (NEXT_STATE.REGS[decoded_opcode.rd] == 0) ? 1 : 0;
-    printf("Valor de neg_imms: %d\n", neg_imms);
-    printf("Valor de imms: %d\n", imms);
-    }
+    
+    NEXT_STATE.REGS[decoded_opcode.rd] = result;
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
 
 void BLE(decoded_instruction decoded_opcode) {

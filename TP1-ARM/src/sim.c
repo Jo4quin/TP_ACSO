@@ -23,7 +23,7 @@ typedef struct {
 
 // Lista de tuplas con los opcodes de las instrucciones
 tuple_t opcode_list[25] = {
-    {0b10001011001, 11, 0}, // ADD Extended
+    {0b10001011000, 11, 0}, // ADD Extended
     {0b10101011000, 11, 0}, // ADDS Extended
     {0b10011011000, 11, 0}, // MUL (Scalar Multiplication)
     {0b11101011000, 11, 0}, // SUBS Extended
@@ -32,7 +32,7 @@ tuple_t opcode_list[25] = {
     {0b11110001100, 11, 0}, // ORR Shifted
     {0b11111010010, 11, 1},  //CMP Immediate
     {0b1001000100, 10, 1},  // ADD Immediate
-    {0b1101001101, 9, 1},   // shift
+    {0b1101001101, 10, 1},   // shift
     {0b1011000100, 10, 1},  // ADDS Immediate
     {0b1101000100, 10, 1},  // SUBS Immediate
     {0b11111000000, 11, 2}, // STUR (Store)
@@ -132,7 +132,7 @@ void run_instruction(decoded_instruction decoded_opcode){
 
 void arithmetic_instruction(decoded_instruction decoded_opcode){
     switch (decoded_opcode.opcode){
-        case 0b10001011001:
+        case 0b10001011000:
             ADD_Extended(decoded_opcode);
             break;
         case 0b10101011000:
