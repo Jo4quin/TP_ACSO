@@ -9,7 +9,7 @@
 void print_binary(uint32_t n) {
     for (int i = 31; i >= 0; i--) {
         printf("%d", (n >> i) & 1);
-        if (i % 4 == 0)  // Opcional: agrega un espacio cada 4 bits para mejorar la legibilidad
+        if (i % 4 == 0)
             printf(" ");
     }
     printf("\n");
@@ -156,7 +156,7 @@ void arithmetic_instruction(decoded_instruction decoded_opcode){
     }
 }
 
-void arithmetic_immediate_instruction(decoded_instruction decoded_opcode){  //hay que ver el tema LSR y LSL
+void arithmetic_immediate_instruction(decoded_instruction decoded_opcode){
     switch (decoded_opcode.opcode){
         case 0b1001000100:
             ADD_Immediate(decoded_opcode);
@@ -243,9 +243,9 @@ void process_instruction()
 
     decoded_instruction decoded = decode_instruction(instruction);
 
-    printf("Decoded: ");            //sims ok
+    printf("Decoded: ");            
     print_binary(decoded.opcode);
-    printf("rm: ");                 //
+    printf("rm: ");                 
     print_binary(decoded.rm);
     printf("shamt: ");
     print_binary(decoded.shamt);
