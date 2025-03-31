@@ -27,10 +27,10 @@ tuple_t opcode_list[25] = {
     {0b10101011000, 11, 0}, // ADDS Extended
     {0b10011011000, 11, 0}, // MUL (Scalar Multiplication)
     {0b11101011000, 11, 0}, // SUBS Extended
-    {0b11101011001, 11, 0}, // CMP Extended
     {0b11101010000, 11, 0}, // ANDS Shifted
     {0b11001010000, 11, 0}, // EOR Shifted
     {0b11110001100, 11, 0}, // ORR Shifted
+    {0b11111010010, 11, 1},  //CMP Immediate
     {0b1001000100, 10, 1},  // ADD Immediate
     {0b1101001101, 9, 1},   // shift
     {0b1011000100, 10, 1},  // ADDS Immediate
@@ -91,7 +91,7 @@ decoded_instruction decode_instruction(uint32_t instruction){
             if(opcode_list[i].type == 4){
                 decoded.opcode = opcode_list[i].opcode;
                 decoded.cond_branch_address = (instruction >> 5) & 0b1111111111111111111;
-                decoded.rt = (instruction >> 5) & 0b11111;
+                decoded.rt = (instruction) & 0b11111;
                 decoded.type = 4;
                 return decoded;
             }
@@ -144,9 +144,6 @@ void arithmetic_instruction(decoded_instruction decoded_opcode){
         case 0b11101011000:
             SUBS_Extended(decoded_opcode);
             break;
-        case 0b11101011001:
-            CMP_Extended(decoded_opcode);
-            break;
         case 0b11101010000:
             ANDS_Shifted(decoded_opcode);
             break;
@@ -167,7 +164,7 @@ void arithmetic_immediate_instruction(decoded_instruction decoded_opcode){  //ha
         case 0b1101001101:
             shift(decoded_opcode);
             break;
-        case 0b1111000100:
+        case 0b11111010010:
             CMP_Immediate(decoded_opcode);
             break;
         case 0b1011000100:

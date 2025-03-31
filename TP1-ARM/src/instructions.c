@@ -52,16 +52,20 @@ void SUBS_Immediate(decoded_instruction decoded_opcode) {
 void SUBS_Extended(decoded_instruction decoded_opcode) {
     printf("SUBS Extended\n");
     // Realiza la resta entre los registros rn y rm
-    uint64_t result = (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rn] - (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rm];
-
-    // Almacena el resultado en el registro de destino rd
-    NEXT_STATE.REGS[decoded_opcode.rd] = (uint32_t)result;
-
-    // Actualiza los flags del procesador
-    NEXT_STATE.FLAG_Z = (CURRENT_STATE.REGS[decoded_opcode.rd] == 0); // Flag de cero
-    NEXT_STATE.FLAG_N = (CURRENT_STATE.REGS[decoded_opcode.rd] >> 31) & 1; // Flag de negativo (bit más significativo)
-
-    // Incrementa el contador de programa
+    if(decoded_opcode.rd == 31) {
+        printf("CMP ext\n");
+        // Es CMP (comparación) - solo actualiza flags, no guarda resultado
+        int64_t result = CURRENT_STATE.REGS[decoded_opcode.rn] - CURRENT_STATE.REGS[decoded_opcode.rm];
+        NEXT_STATE.FLAG_N = (result < 0);
+        NEXT_STATE.FLAG_Z = (result == 0);
+    } else {
+        printf("SUB\n");
+        // Es SUBS - actualiza flags y guarda resultado
+        NEXT_STATE.REGS[decoded_opcode.rd] = CURRENT_STATE.REGS[decoded_opcode.rn] - CURRENT_STATE.REGS[decoded_opcode.rm];
+        NEXT_STATE.FLAG_N = (NEXT_STATE.REGS[decoded_opcode.rd] < 0) ? 1 : 0;
+        NEXT_STATE.FLAG_Z = (NEXT_STATE.REGS[decoded_opcode.rd] == 0) ? 1 : 0;
+    }
+        // Incrementa el contador de programa
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
 
@@ -86,17 +90,6 @@ void CMP_Immediate(decoded_instruction decoded_opcode) {
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
 
-void CMP_Extended(decoded_instruction decoded_opcode){
-    printf("CMP Extended\n");
-    uint64_t result = (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rn] - (uint64_t)CURRENT_STATE.REGS[decoded_opcode.rm];
-
-    // No se almacena el resultado, solo se actualizan los flags del procesador
-    NEXT_STATE.FLAG_Z = ((uint32_t)result == 0); // Flag de cero
-    NEXT_STATE.FLAG_N = ((uint32_t)result < 0); // Flag de negativo (bit más significativo)
-
-    // Incrementa el contador de programa
-    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
-}
 
 void ANDS_Shifted(decoded_instruction decoded_opcode) {
     printf("ANDS Shifted\n");
@@ -187,17 +180,16 @@ void B_cond(decoded_instruction decoded_opcode) {
 
 void B_equal(decoded_instruction decoded_opcode){
     printf("B_equal\n");
+    // Realiza el  salto a la direccion calculada
+    int32_t offset = decoded_opcode.cond_branch_address << 2; // se multiplica por 4
+
+    // Extensión de signo si el bit 18 (más significativo de imm19) es 1
+    if (decoded_opcode.cond_branch_address & 0x40000) {
+        offset |= 0xFFFC0000; // Sign-extend
+    }
+
     if (CURRENT_STATE.FLAG_Z == 1) {
-        // Realiza el  salto a la direccion calculada
-        int32_t offset = decoded_opcode.cond_branch_address << 2; // se multiplica por 4
-
-        // Extensión de signo si el bit 18 (más significativo de imm19) es 1
-        if (offset & 0x40000) {
-            offset |= 0xFFFC0000; // Sign-extend
-        }
-
         NEXT_STATE.PC = CURRENT_STATE.PC + offset;
-
     } else {
         NEXT_STATE.PC = CURRENT_STATE.PC + 4;
     }
