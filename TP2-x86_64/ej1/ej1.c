@@ -1,17 +1,61 @@
 #include "ej1.h"
 
+extern char *strdup(const char *s);
+
 string_proc_list* string_proc_list_create(void){
+	string_proc_list* list = (string_proc_list*)malloc(sizeof(string_proc_list));
+	if(list != NULL){
+		list->first = NULL;
+		list->last  = NULL;
+	}
+	return list;
 }
 
 string_proc_node* string_proc_node_create(uint8_t type, char* hash){
+	string_proc_node* node = (string_proc_node*)malloc(sizeof(string_proc_node));
+	if(node != NULL){
+		node->next      = NULL;
+		node->previous  = NULL;
+		node->hash      = hash;
+		node->type      = type;			
+	}
+	return node;
 }
 
 void string_proc_list_add_node(string_proc_list* list, uint8_t type, char* hash){
+	string_proc_node* new_node = string_proc_node_create(type, hash);
+	if(new_node != NULL){
+		if(list->first == NULL){
+			list->first = new_node;
+			list->last  = new_node;
+		}else{
+			list->last->next = new_node;
+			new_node->previous = list->last;
+			list->last = new_node;
+		}
+	} else {
+		fprintf(stderr, "Error: No se pudo crear el nodo\n");
+	}
 }
 
-char* string_proc_list_concat(string_proc_list* list, uint8_t type , char* hash){
+char* string_proc_list_concat(string_proc_list* list, uint8_t type, char* hash) {
+    if (list == NULL || hash == NULL) {
+        fprintf(stderr, "Error: Lista o hash nulo\n");
+        return NULL;
+    }
+	char* result = malloc(strlen(hash) + 1);
+	if (result) strcpy(result, hash);
+    string_proc_node* current = list->first;
+    while(current != NULL){
+        if(current->type == type){
+            char* temp = str_concat(result, current->hash);
+            free(result);
+            result = temp;
+        }
+        current = current->next;
+    }
+    return result;  // Retorna la última concatenación válida
 }
-
 
 /** AUX FUNCTIONS **/
 
