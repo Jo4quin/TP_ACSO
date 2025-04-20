@@ -15,185 +15,183 @@ extern malloc
 extern free
 extern str_concat
 
-
 string_proc_list_create_asm:
-    mov rdi, 16
-    call malloc
-    cmp rax, 0
-    je .malloc_err
-    mov qword [rax], NULL
-    mov qword [rax + 8], NULL
+    mov     rdi, 16           ; tamaño de la estructura list
+    call    malloc            ; allocate list
+    cmp     rax, 0            ; si malloc devuelve NULL
+    je      .malloc_err       ; saltar a error
+    mov     qword [rax], NULL ; inicializar head = NULL
+    mov     qword [rax + 8], NULL ; inicializar tail = NULL
     ret
 .malloc_err:
-    xor rax, rax
+    xor     rax, rax          ; retornar NULL
     ret
 
-
 string_proc_node_create_asm:
-    push rbp
-    mov rbp, rsp
-    push rbx
-    push r12
+    push    rbp               ; establecer marco de pila
+    mov     rbp, rsp
+    push    rbx               ; salvar callee-saved
+    push    r12
 
-    cmp rsi, 0
-    je .node_null
+    cmp     rsi, 0            ; verificar hash != NULL
+    je      .node_null
 
-    mov r12, rsi
-    mov bl, dil
+    mov     r12, rsi          ; guardar puntero hash en r12
+    mov     bl, dil           ; extraer type a registro byte
 
-    mov rdi, 32
-    call malloc
-    cmp rax, 0
-    je .node_null
+    mov     rdi, 32           ; tamaño de node
+    call    malloc            ; allocate node struct
+    cmp     rax, 0            ; comprobar fallo malloc
+    je      .node_null
 
-    mov qword [rax], NULL
-    mov qword [rax + 8], NULL
-    mov byte  [rax + 16], bl
-    mov qword [rax + 24], r12
+    mov     qword [rax], NULL ; node->next = NULL
+    mov     qword [rax + 8], NULL ; node->prev = NULL
+    mov     byte  [rax + 16], bl ; node->type = saved type
+    mov     qword [rax + 24], r12 ; node->hash = hash ptr
 
-    pop r12
-    pop rbx
-    pop rbp
+    pop     r12               ; restaurar registros
+    pop     rbx
+    pop     rbp
     ret
 
 .node_null:
-    xor rax, rax
-    pop r12
-    pop rbx
-    pop rbp
+    xor     rax, rax          ; devolver NULL en caso de error
+    pop     r12
+    pop     rbx
+    pop     rbp
     ret
 
 string_proc_list_add_node_asm:
-    push rbp
-    mov rbp, rsp
-    push rbx
-    push r13
-    push r14
+    push    rbp
+    mov     rbp, rsp
+    push    rbx               ; salvar registro de lista
+    push    r13               ; salvar type
+    push    r14               ; salvar hash
 
-    mov rbx, rdi       
-    mov r13, rsi        
-    mov r14, rdx       
+    mov     rbx, rdi          ; rbx = puntero a list
+    mov     r13, rsi          ; r13 = type
+    mov     r14, rdx          ; r14 = hash ptr
 
-    movzx edi, r13b
-    mov rsi, r14
-    call string_proc_node_create_asm
-    cmp rax, 0
-    je .end
+    movzx   edi, r13b         ; preparar argumento type
+    mov     rsi, r14          ; preparar argumento hash
+    call    string_proc_node_create_asm
+    cmp     rax, 0            ; ¿new_node == NULL?
+    je      .end_add          ; si no, terminamos
 
-    mov rcx, rax       
+    mov     rcx, rax          ; new_node ptr en rcx
+    mov     rax, [rbx]        ; rax = list->first
+    cmp     rax, 0
+    jne     .list_not_empty   ; si lista no vacía, enlazar al final
 
-    mov rax, [rbx]
-    cmp rax, 0
-    jne .no_vacio
+    mov     [rbx], rcx        ; head = new_node (lista vacía)
+    mov     [rbx + 8], rcx    ; tail = new_node
+    jmp     .end_add
 
-    mov [rbx], rcx
-    mov [rbx + 8], rcx
-    jmp .end
+.list_not_empty:
+    mov     rdx, [rbx + 8]    ; rdx = list->last
+    mov     [rdx], rcx        ; last->next = new_node
+    mov     [rcx + 8], rdx    ; new_node->prev = old last
+    mov     [rbx + 8], rcx    ; tail = new_node
 
-.no_vacio:
-    mov rdx, [rbx + 8]  
-    mov [rdx], rcx     
-    mov [rcx + 8], rdx 
-    mov [rbx + 8], rcx  
-
-.end:
-    pop r14
-    pop r13
-    pop rbx
-    pop rbp
+.end_add:
+    pop     r14               ; restaurar registros
+    pop     r13
+    pop     rbx
+    pop     rbp
     ret
 
-;===========================================================
-; Concatenar todos los hashes del tipo y agregar nuevo nodo
-;===========================================================
 string_proc_list_concat_asm:
-    push rbp
-    mov rbp, rsp
-    sub rsp, 32
-    push rbx
-    push r12
-    push r13
-    push r14
-    push r15
+    push    rbp
+    mov     rbp, rsp
+    sub     rsp, 32           ; espacio para registros locales
+    push    rbx               ; salvar registers usados
+    push    r12
+    push    r13
+    push    r14
+    push    r15
 
-    mov rbx, rdi       
-    movzx r12d, sil     
-    mov r13, rdx      
+    mov     rbx, rdi          ; rbx = list ptr
+    movzx   r12d, sil         ; r12 = filter type
+    mov     r13, rdx          ; r13 = extra hash ptr
 
-    mov rdi, 1
-    call malloc
-    cmp rax, 0
-    je .nulo
-    mov byte [rax], 0
-    mov r14, rax        
+    mov     rdi, 1            ; crear cadena vacía ("\0")
+    call    malloc
+    cmp     rax, 0            ; comprobar malloc
+    je      .null_result
+    mov     byte [rax], 0     ; inicializar terminador
+    mov     r14, rax          ; r14 = acumulador de hashes
 
-    mov r15, [rbx]     
+    mov     r15, [rbx]        ; r15 = primer nodo
 
-.loop:
-    cmp r15, 0
-    je .siguiente
+.LoopConcat:
+    test    r15, r15
+    je      .AfterList        ; si fin de lista, continuar con extra
 
-    mov al, byte [r15 + 16]
-    cmp al, r12b
-    jne .salto
+    mov     al, [r15 + 16]    ; cargar node->type
+    cmp     al, r12b          ; ¿coincide con filter?
+    jne     .NextNode         ; si no, siguiente
 
-    mov rdi, r14
-    mov rsi, [r15 + 24]
-    call str_concat
-    test rax, rax
-    je .fallo
+    mov     rdi, r14          ; cadena actual
+    mov     rsi, [r15 + 24]   ; nodo->hash
+    call    str_concat        ; concatenar
+    test    rax, rax
+    je      .cleanup          ; fallo en concatenación
 
-    mov rdi, r14
-    mov r14, rax
-    call free
+    mov     rdi, r14          ; preparar free(old cadena)
+    mov     r14, rax          ; actualizar acumulador
+    call    free              ; liberar cadena anterior
 
-.salto:
-    mov r15, [r15]
-    jmp .loop
+.NextNode:
+    mov     r15, [r15]        ; avanzar al siguiente nodo
+    jmp     .LoopConcat
 
-.siguiente:
-    cmp r13, 0
-    je .agregar
+.AfterList:
+    test    r13, r13          ; ¿hay extra hash?
+    je      .AppendResult
+    mov     rdi, r14          ; cadena actual
+    mov     rsi, r13          ; extra hash
+    call    str_concat        ; última concatenación
+    test    rax, rax
+    je      .cleanup
 
-    mov rdi, r13
-    mov rsi, r14
-    call str_concat
-    cmp rax, 0
-    je .fallo
+    mov     rdi, r14
+    mov     r14, rax
+    call    free              ; liberar antigua
 
-    mov rdi, r14
-    mov r14, rax
-    call free
+.AppendResult:
+    mov     rdi, rbx          ; args para append
+    movzx   rsi, r12b
+    mov     rdx, r14
+    call    string_proc_list_add_node_asm ; añadir nodo con hash final
 
-.agregar:
-    mov rdi, rbx
-    movzx rsi, r12b
-    mov rdx, r14
-    call string_proc_list_add_node_asm
-
-    mov rax, r14
-    add rsp, 32
-    pop r15
-    pop r14
-    pop r13
-    pop r12
-    pop rbx
-    pop rbp
+    mov     rax, r14          ; devolver puntero al string concatenado
+    add     rsp, 32
+    pop     r15               ; restaurar registros
+    pop     r14
+    pop     r13
+    pop     r12
+    pop     rbx
+    pop     rbp
     ret
 
-.fallo:
-    test r14, r14
-    je .nulo
-    mov rdi, r14
-    call free
+.cleanup:
+    xor     eax, eax          ; error devuelve NULL
+    add     rsp, 32
+    pop     r15
+    pop     r14
+    pop     r13
+    pop     r12
+    pop     rbx
+    pop     rbp
+    ret
 
-.nulo:
-    xor rax, rax
-    add rsp, 32
-    pop r15
-    pop r14
-    pop r13
-    pop r12
-    pop rbx
-    pop rbp
+.null_result:
+    xor     eax, eax          ; fallo en malloc inicial
+    add     rsp, 32
+    pop     r15
+    pop     r14
+    pop     r13
+    pop     r12
+    pop     rbx
+    pop     rbp
     ret
