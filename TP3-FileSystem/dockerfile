@@ -1,0 +1,22 @@
+# Usa Ubuntu 24.04 como base
+FROM ubuntu:24.04
+
+# No preguntar interactivo al instalar
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Instala compilador, OpenSSL (libssl-dev) y Valgrind
+RUN apt update \
+ && apt install -y --no-install-recommends \
+      build-essential \
+      libssl-dev \
+      valgrind \
+ && rm -rf /var/lib/apt/lists/*
+
+# Directorio de trabajo dentro del contenedor
+WORKDIR /workspace
+
+# Copia todo tu TP
+COPY . /workspace
+
+# Comando por defecto: un bash interactivo
+CMD ["bash"]
