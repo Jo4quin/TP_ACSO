@@ -1,13 +1,16 @@
-CC = gcc
-CFLAGS = -Wall -Wextra -std=c11
-
-TARGET = shell
-SRC = shell.c
+CC=gcc
+CFLAGS=-Wall -g
+TARGET=shell
 
 all: $(TARGET)
 
-$(TARGET): $(SRC)
-	$(CC) $(CFLAGS) -o $@ $^
+$(TARGET): shell.c
+	$(CC) $(CFLAGS) -o $(TARGET) shell.c
+
+test: $(TARGET)
+	chmod +x test_shell.sh
+	./test_shell.sh
 
 clean:
-	rm -f $(TARGET)
+	rm -f $(TARGET) *.o test_output/* valgrind.log
+
