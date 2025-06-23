@@ -1,0 +1,23 @@
+# Dockerfile para TP4 Shell
+FROM ubuntu:24.04
+
+# Evitar interacciones de tzdata
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Instalar dependencias necesarias para compilar y analizar memoria
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    valgrind \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Directorio de trabajo dentro del contenedor
+WORKDIR /workspace
+
+# Copiar todo el código fuente al contenedor
+COPY . /workspace
+
+# Compilar el TP: si existe Makefile, usar make; si no, compilar con gcc\RUN [ -f Makefile ] && make || gcc -g -O0 -o tptest *.c
+
+# Comando por defecto al iniciar el contenedor
+CMD ["bash"]

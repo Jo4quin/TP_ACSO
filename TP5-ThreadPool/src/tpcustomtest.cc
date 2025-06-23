@@ -30,21 +30,22 @@ static mutex oslock;
 static const size_t kNumThreads = 4;
 static const size_t kNumFunctions = 10;
 static void simpleTest() {
-  ThreadPool pool(kNumThreads);
-  for (size_t id = 0; id < kNumFunctions; id++) {
+ThreadPool pool(kNumThreads);
+for (size_t id = 0; id < kNumFunctions; id++)
+{
     pool.schedule([id] {
-      oslock.lock();
-      cout << "Thread (ID: " << id << ") has started." << endl;
-      oslock.unlock();
-      size_t sleepTime = (id % 3) * 10;
-      sleep_for(sleepTime);
-      oslock.lock();
-      cout <<  "Thread (ID: " << id << ") has finished." << endl ;
-      oslock.unlock();
+    oslock.lock();
+    cout << "Thread (ID: " << id << ") has started." << endl;
+    oslock.unlock();
+    size_t sleepTime = (id % 3) * 10;
+    sleep_for(sleepTime);
+    oslock.lock();
+    cout <<  "Thread (ID: " << id << ") has finished." << endl ;
+    oslock.unlock();
     });
-  }
+}
 
-  pool.wait();
+pool.wait();
 }
 
 

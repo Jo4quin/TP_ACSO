@@ -1,48 +1,25 @@
-#include "thread-pool.h"
-#include <iostream>
-#include <vector>
-#include <numeric>  // For std::accumulate
-#include <functional>
+CXX      := g++
+CXXFLAGS := -std=c++11 -pthread -Wall -g
+SRCS     := thread-pool.cc Semaphore.cc
 
-using namespace std;
+.PHONY: all test clean
 
-// Function to compute the sum of a subvector
-void computeSum(const vector<int>& data, int start, int end, int* result) {
+all: threadpool tptest customtest run_tests
 
-    *result = accumulate(data.begin() + start, data.begin() + end, 0);
-}
+threadpool: $(SRCS) main.cc
+<TAB>$(CXX) $(CXXFLAGS) -o $@ $(SRCS) main.cc
 
-int main() {
-    // Sample data
-    vector<int> data = {100, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
-    int numThreads = 3;
-    ThreadPool pool(numThreads);
+tptest:    $(SRCS) tptest.cc
+<TAB>$(CXX) $(CXXFLAGS) -o $@ $(SRCS) tptest.cc
 
-    // Results vector to hold the sums computed by each thread
-    vector<int> results(numThreads, 0);
+customtest: $(SRCS) tpcustomtest.cc
+<TAB>$(CXX) $(CXXFLAGS) -o $@ $(SRCS) tpcustomtest.cc
 
-    // Determine the size of each chunk of data to process
-    int n = data.size();
-    int chunkSize = (n + numThreads - 1) / numThreads;  // Ensure all data is covered
+run_tests: thread-pool.cc test_custom1.cc
+<TAB>$(CXX) -std=c++17 -pthread -g -O0 thread-pool.cc test_custom1.cc -o run_tests
 
-    // Schedule tasks in the ThreadPool
-    for (int i = 0; i < numThreads; ++i) {
-        int start = i * chunkSize;
-        int end = min(start + chunkSize, n);
-        if (start < n) {
-            // schedule the task with lambda function
-            /* lambdas : [capture list] (parameters) -> return type {function body} */
-            pool.schedule([start, end, i, &data, &results](void)-> void {computeSum(data, start, end, &results[i]);});
-            //pool.schedule([start, end, i, &data, &results](){computeSum(data, start, end, &results[i]);});
-        }
-    }
+test: run_tests
+<TAB>./run_tests
 
-    // Wait for all threads to finish
-    pool.wait();
-
-    // Calculate total sum
-    int totalSum = accumulate(results.begin(), results.end(), 0);
-    cout << "Total sum of elements: " << totalSum << endl;
-
-    return 0;
-}
+clean:
+<TAB>rm -f threadpool tptest customtest run_tests
